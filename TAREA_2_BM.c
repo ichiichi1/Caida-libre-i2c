@@ -40,6 +40,7 @@
 #include "fsl_debug_console.h"
 #include "fsl_port.h"
 #include "fsl_i2c.h"
+#include "fsl_gpio.h"
 /* TODO: insert other include files here. */
 
 /* TODO: insert other definitions and declarations here. */
@@ -65,12 +66,32 @@ int main(void)
 	/* Init board hardware. */
 	BOARD_InitBootPins();
 	BOARD_InitBootClocks();
-	BOARD_InitBootPeripherals();
 	/* Init FSL debug console. */
 	BOARD_InitDebugConsole();
 
 	CLOCK_EnableClock(kCLOCK_PortE);
+	CLOCK_EnableClock(kCLOCK_PortB);
 	CLOCK_EnableClock(kCLOCK_I2c0);
+
+	port_pin_config_t config_led =
+		{ kPORT_PullDisable, kPORT_SlowSlewRate, kPORT_PassiveFilterDisable,
+				kPORT_OpenDrainDisable, kPORT_LowDriveStrength, kPORT_MuxAsGpio,
+				kPORT_UnlockRegister, };
+
+		//Led Azul CAIDA LIBRE
+		PORT_SetPinConfig(PORTB, 21, &config_led);
+		//Led Rojo MOVIMIENTO
+		PORT_SetPinConfig(PORTB, 22, &config_led);
+		//Led Verde INMOVIL
+		PORT_SetPinConfig(PORTE, 26, &config_led);
+
+		gpio_pin_config_t led_config_gpio =
+			{ kGPIO_DigitalOutput, 1 };
+
+			GPIO_PinInit(GPIOB, 21, &led_config_gpio);
+			GPIO_PinInit(GPIOB, 22, &led_config_gpio);
+			GPIO_PinInit(GPIOE, 26, &led_config_gpio);
+
 
 	port_pin_config_t config_i2c =
 	{ kPORT_PullDisable, kPORT_SlowSlewRate, kPORT_PassiveFilterDisable,
