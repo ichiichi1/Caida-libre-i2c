@@ -48,6 +48,11 @@
 
 volatile bool g_MasterCompletionFlag = false;
 volatile bool pitIsrFlag = false;
+volatile bool toggle = false;
+float ejez;
+float ejey;
+float ejex;
+
 
 static void i2c_master_callback(I2C_Type *base, i2c_master_handle_t *handle,
         status_t status, void * userData)
@@ -134,6 +139,50 @@ int main(void)
 
 	uint8_t data_buffer = 0x01;
 
+#if 0
+	masterXfer.slaveAddress = 0x1D;
+	masterXfer.direction = kI2C_Write;
+	masterXfer.subaddress = 0;
+	masterXfer.subaddressSize = 0;
+	masterXfer.data = &data_buffer;
+	masterXfer.dataSize = 1;
+	masterXfer.flags = kI2C_TransferNoStopFlag;
+
+	I2C_MasterTransferNonBlocking(I2C0,  &g_m_handle,
+	        &masterXfer);
+	while (!g_MasterCompletionFlag){}
+	g_MasterCompletionFlag = false;
+
+	uint8_t read_data;
+
+	masterXfer.slaveAddress = 0x1D;
+	masterXfer.direction = kI2C_Read;
+	masterXfer.subaddress = 0;
+	masterXfer.subaddressSize = 0;
+	masterXfer.data = &read_data;
+	masterXfer.dataSize = 1;
+	masterXfer.flags = kI2C_TransferRepeatedStartFlag;
+
+	I2C_MasterTransferNonBlocking(I2C0, &g_m_handle,
+	        &masterXfer);
+	while (!g_MasterCompletionFlag){}
+	g_MasterCompletionFlag = false;
+#else
+
+	masterXfer.slaveAddress = 0x1D;
+	masterXfer.direction = kI2C_Write;
+	masterXfer.subaddress = 0x2A;
+	masterXfer.subaddressSize = 1;
+	masterXfer.data = &data_buffer;
+	masterXfer.dataSize = 1;
+	masterXfer.flags = kI2C_TransferDefaultFlag;
+
+	I2C_MasterTransferNonBlocking(I2C0,  &g_m_handle,
+	        &masterXfer);
+	while (!g_MasterCompletionFlag){}
+	g_MasterCompletionFlag = false;
+
+#endif
 
 	/* Force the counter to be placed into memory. */
 	volatile static int i = 0;
@@ -160,13 +209,27 @@ int main(void)
 		//eje Z
 		accelerometer[2] = buffer[4]<<8 | buffer[5];
 
+		ejez = (accelerometer[2]*.000244)/4;
+		ejey = (accelerometer[2]*.000244)/4;
+		ejex = (accelerometer[2]*.000244)/4;
+
 		//Falta colocar lo parametros para determinar ne que stado esta
-/*
-		if((accelerometer[2] >> ) & (accelerometer[2] << ) & (pitIsrFlag == true) )
+
+		if((ejez > 0 ) && (ejez < .2) && (pitIsrFlag == true) )
 		{
          pitIsrFlag = false;
+         if(false == toggle)
+         {
+         GPIO_WritePinOutput(GPIOB,22,0);
+         toggle = true;
+         }
+         else
+         {
+         GPIO_WritePinOutput(GPIOB,22,1);
+         toggle = false;
+         }
 
-		}*/
+		}
 
 	}
 	return 0;
