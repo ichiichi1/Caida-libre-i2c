@@ -41,11 +41,13 @@
 #include "fsl_port.h"
 #include "fsl_i2c.h"
 #include "fsl_gpio.h"
+#include "fsl_pit.h"
 /* TODO: insert other include files here. */
 
 /* TODO: insert other definitions and declarations here. */
 
 volatile bool g_MasterCompletionFlag = false;
+volatile bool pitIsrFlag = false;
 
 static void i2c_master_callback(I2C_Type *base, i2c_master_handle_t *handle,
         status_t status, void * userData)
@@ -57,6 +59,12 @@ static void i2c_master_callback(I2C_Type *base, i2c_master_handle_t *handle,
 	}
 }
 
+void PIT0_IRQHandler(void)
+{
+    /* Clear interrupt flag.*/
+    PIT_ClearStatusFlags(PIT, kPIT_Chnl_0, kPIT_TimerFlag);
+    pitIsrFlag = true;
+}
 /*
  * @brief   Application entry point.
  */
@@ -72,6 +80,17 @@ int main(void)
 	CLOCK_EnableClock(kCLOCK_PortE);
 	CLOCK_EnableClock(kCLOCK_PortB);
 	CLOCK_EnableClock(kCLOCK_I2c0);
+
+		pit_config_t pitConfig;
+		PIT_GetDefaultConfig(&pitConfig);
+		PIT_Init(PIT, &pitConfig);
+		PIT_SetTimerPeriod(PIT, kPIT_Chnl_0, (CLOCK_GetBusClkFreq()/4));
+
+
+		PIT_EnableInterrupts(PIT, kPIT_Chnl_0, kPIT_TimerInterruptEnable);
+		EnableIRQ(PIT0_IRQn);
+
+		PIT_StartTimer(PIT, kPIT_Chnl_0);
 
 	port_pin_config_t config_led =
 		{ kPORT_PullDisable, kPORT_SlowSlewRate, kPORT_PassiveFilterDisable,
@@ -141,24 +160,14 @@ int main(void)
 		//eje Z
 		accelerometer[2] = buffer[4]<<8 | buffer[5];
 
-		//Falta colocar lo parameytros para determinar ne que stado esta
-
-		if(accelerometer[2] >>  & accelerometer[2] << )
+		//Falta colocar lo parametros para determinar ne que stado esta
+/*
+		if((accelerometer[2] >> ) & (accelerometer[2] << ) & (pitIsrFlag == true) )
 		{
+         pitIsrFlag = false;
 
-		}
-		else if(accelerometer[2] >>  & accelerometer[2] << )
-		{
+		}*/
 
-		}
-		else if(accelerometer[2] >>  & accelerometer[2] << )
-		{
-
-		}
-		else
-		{
-
-		}
 	}
 	return 0;
 }
